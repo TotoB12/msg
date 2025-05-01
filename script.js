@@ -6,7 +6,7 @@ const uploadButton = document.getElementById('upload-button');
 const fileInput = document.getElementById('file-input');
 const stagedFilesDisplay = document.getElementById('staged-files-display');
 
-const API_SERVER_URL = 'http://localhost:3000'; // Local server for testing
+const API_SERVER_URL = 'https://api.totob12.com';
 const PEERJS_CONFIG = {
     // Use the default PeerJS cloud server for signaling negotiation
 };
