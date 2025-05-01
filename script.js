@@ -19,6 +19,10 @@ let myPeerId = null;
 const connections = {}; // Store connections { peerId: DataConnection }
 let socket = null;
 
+// Configure DOMPurify (optional, defaults are usually good)
+// Allow target="_blank" for links, commonly used in Markdown
+DOMPurify.setConfig({ ADD_ATTR: ['target'] });
+
 // --- Initialization ---
 
 function initializePeer() {
@@ -132,14 +136,19 @@ function setupConnection(conn) {
     conn.on('open', () => {
         console.log(`Connection established with ${conn.peer}`);
         connections[conn.peer] = conn;
-        conn.label = conn.label || conn.peer;
+        conn.label = conn.label || conn.peer; // Store the sender's ID if they provided it
         updateStatus(`${Object.keys(connections).length} user(s) online.`);
     });
 
     conn.on('data', (data) => {
         console.log(`Data received from ${conn.peer}:`, data);
-        if (data.type === 'chat' && data.message) {
-            displayMessage(data.sender || conn.label, data.message, false);
+        // Basic validation of received data structure
+        if (typeof data === 'object' && data !== null && data.type === 'chat' && typeof data.message === 'string') {
+            // Use conn.label (sender's PeerJS ID) if available, otherwise conn.peer
+            const sender = data.sender || conn.label || conn.peer;
+            displayMessage(sender, data.message, false);
+        } else {
+            console.warn(`Received malformed data from ${conn.peer}:`, data);
         }
     });
 
@@ -179,16 +188,26 @@ function sendMessage() {
     if (!receivedByNone) {
         const messagePayload = {
             type: 'chat',
-            sender: myPeerId,
+            sender: myPeerId, // Include sender ID in the payload
             message: messageText
         };
 
         console.log(`Sending message to ${openConnections} peers.`);
         for (const peerId in connections) {
-            if (connections[peerId].open) {
-                connections[peerId].send(messagePayload);
+            if (connections[peerId] && connections[peerId].open) {
+                try {
+                    connections[peerId].send(messagePayload);
+                } catch (error) {
+                    console.error(`Error sending message to ${peerId}:`, error);
+                    // Optionally handle the error, e.g., display a specific warning
+                    displaySystemMessage(`Failed to send message to ${shortId(peerId)}.`);
+                    // Consider closing the connection if sending consistently fails
+                    // connections[peerId].close();
+                    // delete connections[peerId];
+                    // updateStatus(`${Object.keys(connections).length} user(s) online.`);
+                }
             } else {
-                console.warn(`Connection to ${peerId} not open, skipping send.`);
+                console.warn(`Connection to ${peerId} not open or doesn't exist, skipping send.`);
             }
         }
     }
@@ -204,9 +223,40 @@ function displayMessage(senderId, message, isSent, receivedByNone = false) {
     const senderElement = document.createElement('span');
     senderElement.classList.add('sender');
     senderElement.textContent = isSent ? 'You' : shortId(senderId);
-
     messageElement.appendChild(senderElement);
-    messageElement.appendChild(document.createTextNode(message));
+
+    // --- MARKDOWN PROCESSING ---
+    // 1. Parse the Markdown text to HTML using marked
+    //    Disable deprecated options and enable GitHub Flavored Markdown (GFM)
+    const rawHtml = marked.parse(message, { gfm: true, breaks: true });
+
+    // 2. Sanitize the generated HTML using DOMPurify to prevent XSS
+    const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
+        USE_PROFILES: { html: true }, // Ensure we are purifying HTML content
+        ADD_ATTR: ['target'], // Allow target attribute (for target="_blank" on links)
+        FORBID_TAGS: ['style'], // Explicitly forbid style tags
+        FORBID_ATTR: ['style'] // Explicitly forbid style attributes
+        });
+
+    // 3. Add the sanitized HTML to the message element
+    const contentElement = document.createElement('div');
+    contentElement.classList.add('message-content');
+    contentElement.innerHTML = sanitizedHtml;
+
+    // Make external links open in a new tab
+    contentElement.querySelectorAll('a').forEach(link => {
+        // Check if the link is external (starts with http or https)
+        if (link.href.startsWith('http://') || link.href.startsWith('https://')) {
+             // Check if it's not linking to the current host (optional, good practice)
+            if (link.hostname !== window.location.hostname) {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer'; // Security measure for target="_blank"
+            }
+        }
+    });
+
+    messageElement.appendChild(contentElement);
+    // --- END MARKDOWN PROCESSING ---
 
     if (isSent && receivedByNone) {
         const warningElement = document.createElement('span');
@@ -218,6 +268,7 @@ function displayMessage(senderId, message, isSent, receivedByNone = false) {
     messagesDiv.appendChild(messageElement);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 function displaySystemMessage(message) {
     const messageElement = document.createElement('div');
@@ -233,14 +284,18 @@ function updateStatus(text) {
 
 function shortId(id) {
     if (!id) return 'Anonymous';
-    return id.length > 8 ? `${id.substring(0, 4)}...${id.substring(id.length - 4)}` : id;
+    // Ensure id is a string before calling substring
+    const idStr = String(id);
+    return idStr.length > 8 ? `${idStr.substring(0, 4)}...${idStr.substring(idStr.length - 4)}` : idStr;
 }
 
 // --- Event Listeners ---
 
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
+    // Allow sending with Enter, but allow Shift+Enter for new lines
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Prevent default newline behavior
         sendMessage();
     }
 });
@@ -249,7 +304,13 @@ messageInput.addEventListener('keypress', (event) => {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         if (peer && peer.disconnected && !peer.destroyed) {
+            console.log('Tab became visible, attempting PeerJS reconnect.');
             peer.reconnect();
+        }
+        // Also attempt to reconnect socket if it's disconnected
+        if (socket && !socket.connected) {
+            console.log('Tab became visible, attempting Socket.IO reconnect.');
+            socket.connect();
         }
     }
 });

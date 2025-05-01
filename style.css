@@ -51,8 +51,9 @@ h1 {
     margin-bottom: 10px;
     padding: 8px 12px;
     border-radius: 15px;
-    max-width: 75%;
+    max-width: 85%; /* Increased max-width slightly for potentially wider markdown content */
     word-wrap: break-word;
+    line-height: 1.4; /* Improve readability */
 }
 
 .message.received {
@@ -75,6 +76,8 @@ h1 {
     align-self: center;
     font-size: 0.85em;
     background-color: transparent;
+    padding: 2px 0; /* Reduce padding for system messages */
+    margin-bottom: 5px;
 }
 
 .message .sender {
@@ -82,7 +85,8 @@ h1 {
     color: #555;
     display: block;
     margin-bottom: 3px;
-    opacity: 0.7;
+    opacity: 0.9; /* Slightly more visible */
+    font-weight: 600;
 }
 .message.sent .sender {
     color: #eee;
@@ -90,9 +94,127 @@ h1 {
 
 .message .warning {
     font-size: 0.75em;
-    color: #ff6347;
+    color: #ff6347; /* Tomato color for warning */
     margin-left: 5px;
+    font-style: italic;
 }
+
+/* Container for the actual message content (post-markdown) */
+.message-content {
+    /* Inherit color */
+}
+
+/* --- Markdown Element Styling --- */
+
+/* Inline code */
+.message-content code {
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.message.sent code {
+     background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Code blocks */
+.message-content pre {
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 10px;
+    border-radius: 6px;
+    overflow-x: auto; /* Allow horizontal scrolling for long code lines */
+    margin: 8px 0;
+    font-size: 0.9em;
+}
+.message.sent pre {
+     background-color: rgba(255, 255, 255, 0.15);
+}
+.message-content pre code {
+    background-color: transparent; /* Remove inner background for code inside pre */
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit; /* Inherit pre's font size */
+}
+
+/* Blockquotes */
+.message-content blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 10px;
+    margin: 8px 0 8px 5px;
+    color: #555;
+}
+.message.sent blockquote {
+    border-left-color: rgba(255, 255, 255, 0.5);
+    color: #eee;
+}
+
+/* Links */
+.message-content a {
+    color: #007aff;
+    text-decoration: underline;
+}
+.message.sent a {
+    color: #fff; /* Make links white on blue background */
+    font-weight: 600;
+}
+.message.sent a:visited {
+    color: #eee; /* Slightly different visited color on sent messages */
+}
+.message.received a {
+     color: #0056b3; /* Slightly darker blue for received */
+}
+.message.received a:visited {
+     color: #003d80;
+}
+
+
+/* Lists (basic spacing) */
+.message-content ul,
+.message-content ol {
+    margin: 5px 0 5px 20px;
+    padding-left: 15px;
+}
+
+/* Headings (reduce size slightly for chat context) */
+.message-content h1, .message-content h2, .message-content h3,
+.message-content h4, .message-content h5, .message-content h6 {
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+    font-weight: 600;
+}
+.message-content h1 { font-size: 1.4em; }
+.message-content h2 { font-size: 1.3em; }
+.message-content h3 { font-size: 1.2em; }
+.message-content h4 { font-size: 1.1em; }
+.message-content h5 { font-size: 1.0em; }
+.message-content h6 { font-size: 0.9em; color: #666; }
+
+.message.sent h1, .message.sent h2, .message.sent h3,
+.message.sent h4, .message.sent h5, .message.sent h6 {
+    color: #fff; /* Ensure headings are visible on sent messages */
+}
+.message.sent h6 {
+    color: #eee;
+}
+
+
+/* Horizontal Rule */
+.message-content hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 10px 0;
+}
+.message.sent hr {
+    border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+.message-content p {
+    margin: 0;
+}
+
+/* --- End Markdown Element Styling --- */
+
 
 #input-area {
     display: flex;
@@ -107,6 +229,7 @@ h1 {
     border-radius: 20px;
     margin-right: 10px;
     font-size: 1em;
+    resize: none; /* Prevent manual resizing if it were a textarea */
 }
 
 #send-button {
@@ -118,6 +241,7 @@ h1 {
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.2s ease;
+    align-self: center; /* Align button vertically if input grows */
 }
 
 #send-button:hover {
