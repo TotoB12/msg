@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>msg | Simple P2P Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Include PeerJS library -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Include Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>msg</h1>
+        <div id="status">Connecting...</div>
+        <div id="messages">
+            <!-- Messages will appear here -->
+        </div>
+        <div id="input-area">
+            <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
