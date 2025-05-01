@@ -1,34 +1,34 @@
+/* Keep existing styles from your previous file */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f8;
+    font-family: sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    color: #333;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
 }
 
 #chat-container {
     width: 90%;
-    max-width: 600px;
-    height: 80vh;
+    max-width: 800px;
+    height: 90vh;
+    max-height: 900px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* Prevent content spillover */
 }
 
 h1 {
     text-align: center;
-    padding: 15px 0;
-    margin: 0;
-    background-color: #eee;
+    color: #333;
+    margin: 15px 0;
     font-size: 1.5em;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
 }
 
 #status {
@@ -37,6 +37,7 @@ h1 {
     color: #888;
     text-align: center;
     border-bottom: 1px solid #eee;
+    min-height: 1.2em; /* Prevent layout shift */
 }
 
 #messages {
@@ -45,220 +46,316 @@ h1 {
     padding: 15px;
     display: flex;
     flex-direction: column;
+    gap: 10px; /* Space between messages */
 }
 
 .message {
-    margin-bottom: 10px;
     padding: 8px 12px;
     border-radius: 15px;
-    max-width: 85%; /* Increased max-width slightly for potentially wider markdown content */
-    word-wrap: break-word;
-    line-height: 1.4; /* Improve readability */
-}
-
-.message.received {
-    background-color: #e5e5ea;
-    color: #000;
-    align-self: flex-start;
-    border-bottom-left-radius: 4px;
+    max-width: 75%;
+    word-wrap: break-word; /* Allow long words/links to wrap */
+    position: relative; /* Needed for potential absolute elements inside */
 }
 
 .message.sent {
-    background-color: #007aff;
-    color: #fff;
+    background-color: #007bff;
+    color: white;
     align-self: flex-end;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 5px;
 }
 
-.message.system {
-    font-style: italic;
-    color: #888;
-    align-self: center;
-    font-size: 0.85em;
-    background-color: transparent;
-    padding: 2px 0; /* Reduce padding for system messages */
-    margin-bottom: 5px;
+.message.received {
+    background-color: #e9e9eb;
+    color: #333;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
 }
 
 .message .sender {
-    font-size: 0.75em;
-    color: #555;
     display: block;
-    margin-bottom: 3px;
-    opacity: 0.9; /* Slightly more visible */
-    font-weight: 600;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: inherit; /* Inherit color from parent */
+    opacity: 0.8;
 }
-.message.sent .sender {
+.message.received .sender {
+    color: #555; /* Slightly darker sender name for received */
+}
+
+.message-content {
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* Styling for Markdown content within messages */
+.message-content p {
+    margin: 0 0 5px 0; /* Adjust paragraph spacing */
+}
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+.message-content a {
+    color: inherit; /* Use message text color */
+    text-decoration: underline;
+}
+.message.sent a {
+     color: #bee3ff; /* Lighter blue for links in sent messages */
+}
+.message.received a {
+     color: #0056b3; /* Darker blue for links in received messages */
+}
+.message-content code {
+    background-color: rgba(0, 0, 0, 0.08);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+.message-content pre {
+    background-color: rgba(0, 0, 0, 0.08);
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto; /* Allow horizontal scrolling for code blocks */
+    margin: 5px 0;
+}
+.message-content pre code {
+    background-color: transparent; /* Don't double background */
+    padding: 0;
+    border-radius: 0;
+}
+.message-content blockquote {
+    border-left: 3px solid rgba(0, 0, 0, 0.2);
+    padding-left: 10px;
+    margin: 5px 0 5px 5px;
+    font-style: italic;
+    color: #555;
+}
+.message.sent .message-content blockquote {
+    border-left-color: rgba(255, 255, 255, 0.5);
     color: #eee;
 }
 
 .message .warning {
     font-size: 0.75em;
-    color: #ff6347; /* Tomato color for warning */
-    margin-left: 5px;
     font-style: italic;
+    opacity: 0.8;
+    margin-left: 5px;
 }
 
-/* Container for the actual message content (post-markdown) */
-.message-content {
-    /* Inherit color */
+.message.system {
+    align-self: center;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-size: 0.8em;
+    font-style: italic;
+    max-width: 90%;
+    text-align: center;
 }
 
-/* --- Markdown Element Styling --- */
-
-/* Inline code */
-.message-content code {
-    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-    background-color: rgba(0, 0, 0, 0.06);
-    padding: 0.1em 0.4em;
-    border-radius: 4px;
-    font-size: 0.9em;
-}
-.message.sent code {
-     background-color: rgba(255, 255, 255, 0.15);
+/* Staged Files Display Area */
+#staged-files-display {
+    padding: 5px 15px 0 15px; /* Padding top/sides, no bottom */
+    max-height: 100px; /* Limit height */
+    overflow-y: auto; /* Allow scrolling if many files */
+    background-color: #f8f9fa; /* Match input area background */
+    border-top: 1px solid #eee; /* Separator line */
+    display: flex; /* Use flexbox for layout */
+    flex-wrap: wrap; /* Allow items to wrap */
+    gap: 5px; /* Space between items */
 }
 
-/* Code blocks */
-.message-content pre {
-    background-color: rgba(0, 0, 0, 0.06);
-    padding: 10px;
-    border-radius: 6px;
-    overflow-x: auto; /* Allow horizontal scrolling for long code lines */
-    margin: 8px 0;
-    font-size: 0.9em;
-}
-.message.sent pre {
-     background-color: rgba(255, 255, 255, 0.15);
-}
-.message-content pre code {
-    background-color: transparent; /* Remove inner background for code inside pre */
-    padding: 0;
-    border-radius: 0;
-    font-size: inherit; /* Inherit pre's font size */
+.staged-file-item {
+    background-color: #e9ecef;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap; /* Prevent wrapping within the item */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Show ellipsis for long names */
+    max-width: 200px; /* Limit width of individual items */
 }
 
-/* Blockquotes */
-.message-content blockquote {
-    border-left: 4px solid #ccc;
-    padding-left: 10px;
-    margin: 8px 0 8px 5px;
-    color: #555;
-}
-.message.sent blockquote {
-    border-left-color: rgba(255, 255, 255, 0.5);
-    color: #eee;
+.staged-file-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Links */
-.message-content a {
-    color: #007aff;
-    text-decoration: underline;
-}
-.message.sent a {
-    color: #fff; /* Make links white on blue background */
-    font-weight: 600;
-}
-.message.sent a:visited {
-    color: #eee; /* Slightly different visited color on sent messages */
-}
-.message.received a {
-     color: #0056b3; /* Slightly darker blue for received */
-}
-.message.received a:visited {
-     color: #003d80;
-}
-
-
-/* Lists (basic spacing) */
-.message-content ul,
-.message-content ol {
-    margin: 5px 0 5px 20px;
-    padding-left: 15px;
-}
-
-/* Headings (reduce size slightly for chat context) */
-.message-content h1, .message-content h2, .message-content h3,
-.message-content h4, .message-content h5, .message-content h6 {
-    margin-top: 0.8em;
-    margin-bottom: 0.4em;
-    font-weight: 600;
-}
-.message-content h1 { font-size: 1.4em; }
-.message-content h2 { font-size: 1.3em; }
-.message-content h3 { font-size: 1.2em; }
-.message-content h4 { font-size: 1.1em; }
-.message-content h5 { font-size: 1.0em; }
-.message-content h6 { font-size: 0.9em; color: #666; }
-
-.message.sent h1, .message.sent h2, .message.sent h3,
-.message.sent h4, .message.sent h5, .message.sent h6 {
-    color: #fff; /* Ensure headings are visible on sent messages */
-}
-.message.sent h6 {
-    color: #eee;
-}
-
-
-/* Horizontal Rule */
-.message-content hr {
+.staged-file-item button {
+    background: none;
     border: none;
-    border-top: 1px solid #ddd;
-    margin: 10px 0;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.1em;
+    line-height: 1; /* Prevent extra height */
 }
-.message.sent hr {
-    border-top-color: rgba(255, 255, 255, 0.3);
+.staged-file-item button:hover {
+    color: #dc3545; /* Red on hover */
 }
-
-.message-content p {
-    margin: 0;
-}
-
-/* --- End Markdown Element Styling --- */
 
 
 #input-area {
     display: flex;
-    border-top: 1px solid #ddd;
     padding: 10px;
+    /* border-top: 1px solid #eee; Removed, moved to staged files display */
+    background-color: #f8f9fa;
+    position: relative; /* Needed for absolute positioning of upload button */
+}
+
+/* Style for the file upload button */
+#upload-button {
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Make icon larger */
+    cursor: pointer;
+    padding: 0 10px; /* Add some padding */
+    color: #6c757d;
+    transition: color 0.2s;
+    position: absolute; /* Position inside the input area */
+    left: 10px;       /* Align to the left */
+    top: 50%;         /* Center vertically */
+    transform: translateY(-50%);
+    z-index: 2;       /* Ensure it's above the text input */
+}
+
+#upload-button:hover {
+    color: #343a40;
 }
 
 #message-input {
     flex-grow: 1;
-    padding: 10px;
     border: 1px solid #ccc;
     border-radius: 20px;
-    margin-right: 10px;
+    padding: 10px 15px 10px 45px; /* Add left padding for the upload button */
     font-size: 1em;
-    resize: none; /* Prevent manual resizing if it were a textarea */
+    resize: none; /* Prevent manual resize if it were a textarea */
+    margin-right: 10px;
+    transition: border-color 0.2s;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 #send-button {
     padding: 10px 20px;
-    background-color: #007aff;
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 20px;
     cursor: pointer;
     font-size: 1em;
-    transition: background-color 0.2s ease;
-    align-self: center; /* Align button vertically if input grows */
+    transition: background-color 0.2s;
 }
 
 #send-button:hover {
     background-color: #0056b3;
 }
 
-/* Scrollbar styling (optional) */
-#messages::-webkit-scrollbar {
-    width: 6px;
+/* Styles for File Transfer Messages */
+.message.file-transfer {
+    /* Use existing message styles but maybe slightly different background? */
+    /* background-color: #e2f0ff; */ /* Example: light blue background */
+    /* color: #333; */
 }
-#messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
+
+.file-info {
+    font-weight: bold;
+    margin-bottom: 5px;
 }
-#messages::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 3px;
+
+.file-progress-container {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    height: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    overflow: hidden; /* Ensure progress bar stays within bounds */
 }
-#messages::-webkit-scrollbar-thumb:hover {
-    background: #aaa;
+
+.file-progress-bar {
+    width: 0%; /* Start at 0% */
+    height: 100%;
+    background-color: #28a745; /* Green for progress */
+    border-radius: 5px;
+    transition: width 0.1s linear; /* Smooth progress update */
+}
+
+.file-status {
+    font-size: 0.8em;
+    font-style: italic;
+    color: #555;
+    margin-top: 3px;
+}
+.message.sent .file-status {
+    color: #eee;
+}
+.message.received .file-status {
+    color: #555;
+}
+
+
+.download-link {
+    display: inline-block; /* Allow margin/padding */
+    margin-top: 8px;
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: white !important; /* Force white text */
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+}
+
+.download-link:hover {
+    background-color: #218838;
+    text-decoration: none;
+}
+
+.download-link[disabled] {
+    background-color: #aaa;
+    cursor: not-allowed;
+    pointer-events: none; /* Prevent clicks */
+}
+
+/* Responsive Adjustments (Optional Example) */
+@media (max-width: 600px) {
+    #chat-container {
+        width: 100%;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+    }
+    h1 {
+        font-size: 1.2em;
+    }
+    .message {
+        max-width: 90%;
+    }
+    #staged-files-display {
+        max-height: 80px; /* Adjust height */
+    }
+    .staged-file-item {
+        max-width: 150px; /* Adjust max width */
+    }
+    #upload-button {
+        font-size: 1.3em;
+        padding: 0 8px;
+    }
+    #message-input {
+        padding-left: 40px; /* Adjust padding for smaller button */
+        font-size: 0.95em;
+    }
+    #send-button {
+        padding: 8px 15px;
+        font-size: 0.95em;
+    }
 }
