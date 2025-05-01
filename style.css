@@ -88,6 +88,11 @@ h1 {
     color: #eee;
 }
 
+.message .warning {
+    font-size: 0.75em;
+    color: #ff6347;
+    margin-left: 5px;
+}
 
 #input-area {
     display: flex;

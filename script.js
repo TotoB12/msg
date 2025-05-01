@@ -40,7 +40,6 @@ function initializePeer() {
         updateStatus('PeerJS connection lost. Attempting to reconnect...');
         console.error('PeerJS disconnected. Attempting reconnect.');
         // PeerJS will attempt to reconnect automatically.
-        // You might want to add more robust handling here if needed.
     });
 
     peer.on('close', () => {
@@ -52,41 +51,30 @@ function initializePeer() {
     peer.on('error', (err) => {
         updateStatus(`PeerJS Error: ${err.type}`);
         console.error('PeerJS Error:', err);
-        // Common errors: 'network', 'unavailable-id', 'webrtc', 'server-error'
-        // Handle specific errors if necessary
         if (err.type === 'unavailable-id') {
-            // This shouldn't happen if ID is undefined, but just in case
             peer = null; // Force re-creation
             setTimeout(initializePeer, 3000);
         } else if (err.type === 'network' || err.type === 'server-error') {
-             // Might need to retry connection or inform user
-             updateStatus('Connection issues. Check network or try refreshing.');
+            updateStatus('Connection issues. Check network or try refreshing.');
         }
     });
 }
 
 function initializeSignaling() {
-    // Connect to the '/msg' namespace on the Socket.IO server
-    socket = io(`${API_SERVER_URL}/msg`, { // Still connect to the /msg namespace
-        path: '/box/socket.io',         // *** ADD THIS LINE *** Tell client the actual server path
-        // Optional: Explicitly setting transports can sometimes help if polling fails
-        // and websockets are preferred/available.
-        // transports: ['websocket', 'polling'],
+    socket = io(`${API_SERVER_URL}/msg`, {
+        path: '/socket.io',
     });
 
     socket.on('connect', () => {
         console.log('Connected to signaling server (Socket.IO)');
         updateStatus(`Connected as ${shortId(myPeerId)}. Joining chat...`);
-        // Join the chat room with our PeerJS ID
         socket.emit('join-room', myPeerId);
     });
 
     socket.on('connect_error', (err) => {
-        // Log the full error object for more details
         console.error('Signaling connection error:', err);
-        // Display a more informative message if possible
-        let errorReason = err.message; // Basic message
-        if (err.cause) { // Check for underlying cause (like XHR status)
+        let errorReason = err.message;
+        if (err.cause) {
             errorReason += ` (cause: ${err.cause.status || err.cause.message || 'unknown'})`;
         }
         updateStatus(`Error connecting to signaling server: ${errorReason}`);
@@ -95,11 +83,8 @@ function initializeSignaling() {
     socket.on('disconnect', (reason) => {
         console.warn('Disconnected from signaling server:', reason);
         updateStatus('Disconnected from signaling server.');
-        // Handle disconnection, maybe attempt reconnection after a delay
-        // Note: Socket.IO client usually attempts reconnection automatically
     });
 
-    // --- Signaling Event Handlers --- (rest of the function remains the same)
     socket.on('existing-users', (peerIds) => {
         console.log('Existing users:', peerIds);
         updateStatus(`Connected as ${shortId(myPeerId)}. ${peerIds.length} other user(s) online.`);
@@ -113,8 +98,8 @@ function initializeSignaling() {
     socket.on('user-joined', (peerId) => {
         console.log('User joined:', peerId);
         if (peerId !== myPeerId && !connections[peerId]) {
-             displaySystemMessage(`${shortId(peerId)} joined the chat.`);
-             connectToPeer(peerId);
+            displaySystemMessage(`${shortId(peerId)} joined the chat.`);
+            connectToPeer(peerId);
         }
     });
 
@@ -122,13 +107,12 @@ function initializeSignaling() {
         console.log('User left:', peerId);
         if (connections[peerId]) {
             displaySystemMessage(`${shortId(connections[peerId].label || peerId)} left the chat.`);
-            connections[peerId].close(); // Ensure connection is closed P2P side
+            connections[peerId].close();
             delete connections[peerId];
             updateStatus(`${Object.keys(connections).length} user(s) online.`);
         } else {
-            // If we didn't have a direct connection (maybe they left quickly)
-             displaySystemMessage(`${shortId(peerId)} left the chat.`);
-             updateStatus(`${Object.keys(connections).length} user(s) online.`);
+            displaySystemMessage(`${shortId(peerId)} left the chat.`);
+            updateStatus(`${Object.keys(connections).length} user(s) online.`);
         }
     });
 }
@@ -138,8 +122,8 @@ function initializeSignaling() {
 function connectToPeer(peerId) {
     console.log(`Attempting to connect to ${peerId}`);
     const conn = peer.connect(peerId, {
-        reliable: true, // Use reliable data channel (TCP-like)
-        label: myPeerId // Send our ID as label (optional)
+        reliable: true,
+        label: myPeerId
     });
     setupConnection(conn);
 }
@@ -148,26 +132,23 @@ function setupConnection(conn) {
     conn.on('open', () => {
         console.log(`Connection established with ${conn.peer}`);
         connections[conn.peer] = conn;
-        conn.label = conn.label || conn.peer; // Store the label if provided
+        conn.label = conn.label || conn.peer;
         updateStatus(`${Object.keys(connections).length} user(s) online.`);
-         // Optional: Send a handshake message or request username
-         // conn.send({ type: 'handshake', sender: myPeerId });
     });
 
     conn.on('data', (data) => {
         console.log(`Data received from ${conn.peer}:`, data);
         if (data.type === 'chat' && data.message) {
-            displayMessage(data.sender || conn.label, data.message, false); // false = received
+            displayMessage(data.sender || conn.label, data.message, false);
         }
-        // Handle other data types if needed (e.g., username exchange)
     });
 
     conn.on('close', () => {
         console.log(`Connection closed with ${conn.peer}`);
         if (connections[conn.peer]) {
-             displaySystemMessage(`${shortId(connections[conn.peer].label || conn.peer)} connection closed.`);
-             delete connections[conn.peer];
-             updateStatus(`${Object.keys(connections).length} user(s) online.`);
+            displaySystemMessage(`${shortId(connections[conn.peer].label || conn.peer)} connection closed.`);
+            delete connections[conn.peer];
+            updateStatus(`${Object.keys(connections).length} user(s) online.`);
         }
     });
 
@@ -189,54 +170,62 @@ function sendMessage() {
         return;
     }
 
+    const openConnections = Object.values(connections).filter(conn => conn.open).length;
+    const receivedByNone = openConnections === 0;
+
     // Display message locally immediately
-    displayMessage(myPeerId, messageText, true); // true = sent
+    displayMessage(myPeerId, messageText, true, receivedByNone);
 
-    // Prepare message payload
-    const messagePayload = {
-        type: 'chat',
-        sender: myPeerId, // Or a chosen nickname
-        message: messageText
-    };
+    if (!receivedByNone) {
+        const messagePayload = {
+            type: 'chat',
+            sender: myPeerId,
+            message: messageText
+        };
 
-    // Send to all connected peers
-    console.log(`Sending message to ${Object.keys(connections).length} peers.`);
-    for (const peerId in connections) {
-        if (connections[peerId] && connections[peerId].open) {
-            connections[peerId].send(messagePayload);
-        } else {
-            console.warn(`Connection to ${peerId} not open, skipping send.`);
+        console.log(`Sending message to ${openConnections} peers.`);
+        for (const peerId in connections) {
+            if (connections[peerId].open) {
+                connections[peerId].send(messagePayload);
+            } else {
+                console.warn(`Connection to ${peerId} not open, skipping send.`);
+            }
         }
     }
 
-    messageInput.value = ''; // Clear input field
+    messageInput.value = '';
 }
 
-function displayMessage(senderId, message, isSent) {
+function displayMessage(senderId, message, isSent, receivedByNone = false) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message');
     messageElement.classList.add(isSent ? 'sent' : 'received');
 
     const senderElement = document.createElement('span');
     senderElement.classList.add('sender');
-    // Show only a short part of the ID for readability
     senderElement.textContent = isSent ? 'You' : shortId(senderId);
 
     messageElement.appendChild(senderElement);
-    messageElement.appendChild(document.createTextNode(message)); // Use textNode to prevent XSS
+    messageElement.appendChild(document.createTextNode(message));
+
+    if (isSent && receivedByNone) {
+        const warningElement = document.createElement('span');
+        warningElement.classList.add('warning');
+        warningElement.textContent = ' (not received by anyone)';
+        messageElement.appendChild(warningElement);
+    }
 
     messagesDiv.appendChild(messageElement);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 function displaySystemMessage(message) {
-     const messageElement = document.createElement('div');
-     messageElement.classList.add('message', 'system');
-     messageElement.textContent = message;
-     messagesDiv.appendChild(messageElement);
-     messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', 'system');
+    messageElement.textContent = message;
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
-
 
 function updateStatus(text) {
     statusDiv.textContent = text;
@@ -244,7 +233,6 @@ function updateStatus(text) {
 
 function shortId(id) {
     if (!id) return 'Anonymous';
-    // Show first 4 and last 4 chars of the PeerJS ID
     return id.length > 8 ? `${id.substring(0, 4)}...${id.substring(id.length - 4)}` : id;
 }
 
@@ -254,6 +242,15 @@ sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
         sendMessage();
+    }
+});
+
+// Handle tab visibility changes to reconnect if necessary
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (peer && peer.disconnected && !peer.destroyed) {
+            peer.reconnect();
+        }
     }
 });
 
