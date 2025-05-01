@@ -55,6 +55,8 @@ h1 {
     max-width: 75%;
     word-wrap: break-word; /* Allow long words/links to wrap */
     position: relative; /* Needed for potential absolute elements inside */
+    display: flex; /* Use flex for better internal alignment */
+    flex-direction: column; /* Stack sender/content vertically */
 }
 
 .message.sent {
@@ -72,7 +74,7 @@ h1 {
 }
 
 .message .sender {
-    display: block;
+    /* display: block; No longer needed with flex column */
     font-size: 0.75em;
     font-weight: bold;
     margin-bottom: 4px;
@@ -155,46 +157,87 @@ h1 {
 
 /* Staged Files Display Area */
 #staged-files-display {
-    padding: 5px 15px 0 15px; /* Padding top/sides, no bottom */
-    max-height: 100px; /* Limit height */
+    padding: 10px 15px; /* Consistent padding */
+    max-height: 120px; /* Increased height for previews */
     overflow-y: auto; /* Allow scrolling if many files */
     background-color: #f8f9fa; /* Match input area background */
     border-top: 1px solid #eee; /* Separator line */
     display: flex; /* Use flexbox for layout */
-    flex-wrap: wrap; /* Allow items to wrap */
-    gap: 5px; /* Space between items */
+    flex-wrap: nowrap; /* Prevent wrapping, allow horizontal scroll */
+    overflow-x: auto; /* Horizontal scroll for many files */
+    gap: 10px; /* Space between items */
 }
 
 .staged-file-item {
     background-color: #e9ecef;
-    padding: 3px 8px;
-    border-radius: 12px;
+    padding: 5px;
+    border-radius: 8px; /* Slightly less rounded */
     font-size: 0.8em;
     display: flex;
+    flex-direction: column; /* Stack preview and info */
     align-items: center;
-    gap: 5px;
-    white-space: nowrap; /* Prevent wrapping within the item */
-    overflow: hidden; /* Hide overflow */
-    text-overflow: ellipsis; /* Show ellipsis for long names */
-    max-width: 200px; /* Limit width of individual items */
+    gap: 4px;
+    width: 70px; /* Fixed width for consistency */
+    flex-shrink: 0; /* Prevent items from shrinking */
+    border: 1px solid #ddd;
+    position: relative; /* For remove button positioning */
 }
 
-.staged-file-item span {
+.staged-preview {
+    width: 50px;
+    height: 50px;
+    background-color: #ccc; /* Placeholder background */
+    border-radius: 4px;
+    overflow: hidden; /* Clip content to square */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #bbb;
+}
+
+.staged-preview img,
+.staged-preview video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Scale and crop to fill square */
+}
+
+.staged-preview .file-icon {
+    font-size: 2em; /* Larger icon */
+    color: #666;
+}
+
+.staged-file-info {
+    font-size: 0.85em;
+    text-align: center;
+    width: 100%; /* Take full width */
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 3px; /* Small side padding */
+    color: #333;
 }
 
-.staged-file-item button {
-    background: none;
+.staged-file-item button.remove-staged {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
     border: none;
-    color: #6c757d;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    line-height: 16px; /* Center the 'x' */
+    text-align: center;
     cursor: pointer;
     padding: 0;
-    font-size: 1.1em;
-    line-height: 1; /* Prevent extra height */
+    transition: background-color 0.2s;
 }
-.staged-file-item button:hover {
-    color: #dc3545; /* Red on hover */
+.staged-file-item button.remove-staged:hover {
+    background-color: rgba(255, 0, 0, 1);
 }
 
 
@@ -261,25 +304,98 @@ h1 {
 
 /* Styles for File Transfer Messages */
 .message.file-transfer {
-    /* Use existing message styles but maybe slightly different background? */
-    /* background-color: #e2f0ff; */ /* Example: light blue background */
-    /* color: #333; */
+    /* Use existing message styles */
+    gap: 8px; /* Space between elements inside */
 }
+
+/* Container for file preview and details */
+.file-transfer-content {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    gap: 10px;
+    width: 100%; /* Take full width within message bubble */
+}
+
+.file-preview {
+    width: 60px; /* Square size */
+    height: 60px;
+    background-color: #ccc; /* Placeholder background */
+    border-radius: 4px;
+    overflow: hidden; /* Clip content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #bbb;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.message.sent .file-preview {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+.message.received .file-preview {
+    background-color: #ddd;
+    border-color: #ccc;
+}
+
+
+.file-preview img,
+.file-preview video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Scale and crop */
+}
+
+.file-preview .file-icon {
+    font-size: 2.5em; /* Larger icon */
+    color: #666;
+}
+.message.sent .file-preview .file-icon {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+
+/* Container for file info, progress, status, download */
+.file-details {
+    flex-grow: 1; /* Take remaining space */
+    min-width: 0; /* Allow flex item to shrink */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically center content */
+    gap: 4px;
+}
+
 
 .file-info {
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 0; /* Adjusted spacing */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
+.file-size {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+.message.sent .file-size {
+    opacity: 0.8;
+}
+
 
 .file-progress-container {
     width: 100%;
     background-color: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
-    height: 10px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    height: 8px; /* Slightly thinner */
+    /* margin-top: 5px; */
+    /* margin-bottom: 5px; */
     overflow: hidden; /* Ensure progress bar stays within bounds */
 }
+.message.sent .file-progress-container {
+     background-color: rgba(255, 255, 255, 0.2);
+}
+
 
 .file-progress-bar {
     width: 0%; /* Start at 0% */
@@ -289,14 +405,19 @@ h1 {
     transition: width 0.1s linear; /* Smooth progress update */
 }
 
+/* Hide progress bar when transfer is complete */
+.message.file-transfer.transfer-complete .file-progress-container {
+    display: none;
+}
+
 .file-status {
     font-size: 0.8em;
     font-style: italic;
     color: #555;
-    margin-top: 3px;
+    /* margin-top: 3px; */
 }
 .message.sent .file-status {
-    color: #eee;
+    color: rgba(255, 255, 255, 0.85);
 }
 .message.received .file-status {
     color: #555;
@@ -305,7 +426,7 @@ h1 {
 
 .download-link {
     display: inline-block; /* Allow margin/padding */
-    margin-top: 8px;
+    /* margin-top: 8px; */
     padding: 5px 10px;
     background-color: #28a745;
     color: white !important; /* Force white text */
@@ -313,6 +434,11 @@ h1 {
     border-radius: 5px;
     font-size: 0.9em;
     transition: background-color 0.2s;
+    align-self: flex-start; /* Align button to the left within details */
+    max-width: 100%; /* Prevent overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .download-link:hover {
@@ -324,9 +450,14 @@ h1 {
     background-color: #aaa;
     cursor: not-allowed;
     pointer-events: none; /* Prevent clicks */
+    opacity: 0.7;
+}
+.message.sent .download-link[disabled] {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Responsive Adjustments (Optional Example) */
+
+/* Responsive Adjustments */
 @media (max-width: 600px) {
     #chat-container {
         width: 100%;
@@ -341,10 +472,27 @@ h1 {
         max-width: 90%;
     }
     #staged-files-display {
-        max-height: 80px; /* Adjust height */
+        max-height: 100px; /* Adjust height */
+        padding: 8px 10px;
     }
     .staged-file-item {
-        max-width: 150px; /* Adjust max width */
+        width: 65px; /* Slightly smaller */
+    }
+    .staged-preview {
+        width: 45px;
+        height: 45px;
+    }
+     .staged-preview .file-icon {
+        font-size: 1.8em;
+    }
+    .staged-file-info {
+        font-size: 0.8em;
+    }
+    .staged-file-item button.remove-staged {
+        width: 16px;
+        height: 16px;
+        font-size: 11px;
+        line-height: 15px;
     }
     #upload-button {
         font-size: 1.3em;
@@ -357,5 +505,12 @@ h1 {
     #send-button {
         padding: 8px 15px;
         font-size: 0.95em;
+    }
+    .file-preview {
+        width: 50px;
+        height: 50px;
+    }
+     .file-preview .file-icon {
+        font-size: 2em;
     }
 }
