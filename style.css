@@ -423,38 +423,24 @@ h1 {
     color: #555;
 }
 
-
-.download-link {
-    display: inline-block; /* Allow margin/padding */
-    /* margin-top: 8px; */
-    padding: 5px 10px;
-    background-color: #28a745;
-    color: white !important; /* Force white text */
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 0.9em;
-    transition: background-color 0.2s;
-    align-self: flex-start; /* Align button to the left within details */
-    max-width: 100%; /* Prevent overflow */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+/* NEW: Style for clickable download status */
+.message.received .file-status.clickable-download {
+    color: #0056b3; /* Link color */
+    text-decoration: underline;
+    cursor: pointer;
+    font-style: normal; /* Remove italic */
+    font-weight: bold;
+}
+.message.received .file-status.clickable-download:hover {
+    color: #003d80; /* Darker hover */
 }
 
-.download-link:hover {
-    background-color: #218838;
-    text-decoration: none;
-}
 
-.download-link[disabled] {
-    background-color: #aaa;
-    cursor: not-allowed;
-    pointer-events: none; /* Prevent clicks */
-    opacity: 0.7;
-}
-.message.sent .download-link[disabled] {
-    background-color: rgba(255, 255, 255, 0.3);
-}
+/* REMOVED Download Link Styles (No longer needed for received) */
+/* .download-link { ... } */
+/* .download-link:hover { ... } */
+/* .download-link[disabled] { ... } */
+/* .message.sent .download-link[disabled] { ... } */
 
 
 /* Responsive Adjustments */
